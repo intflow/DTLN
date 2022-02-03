@@ -35,13 +35,13 @@ os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
 
 # path to folder containing the noisy or mixed audio training files
-path_to_train_mix = '/path/to/noisy/training/data/'
+path_to_train_mix = '/data/DNS-Challenge/training_set/train/noisy/'
 # path to folder containing the clean/speech files for training
-path_to_train_speech = '/path/to/clean/training/data/'
+path_to_train_speech = '/data/DNS-Challenge/training_set/train/clean/'
 # path to folder containing the noisy or mixed audio validation data
-path_to_val_mix = '/path/to/noisy/validation/data/'
+path_to_val_mix = '/data/DNS-Challenge/training_set/val/noisy/'
 # path to folder containing the clean audio validation data
-path_to_val_speech = '/path/to/clean/validation/data/'
+path_to_val_speech = '/data/DNS-Challenge/training_set/val/clean/'
 
 # name your training run
 runName = 'DTLN_model'
