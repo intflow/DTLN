@@ -8,7 +8,7 @@ the model into the folder "./models_'runName'/". Also a log file of the
 training progress is written there. To change any parameters go to the 
 "DTLN_model.py" file or use "modelTrainer.parameter = XY" in this file.
 It is recommended to run the training on a GPU. The setup is optimized for the
-DNS-Challenge data set. If you use a custom data set, just play around with
+Drone_Audio_dataset_intflow data set. If you use a custom data set, just play around with
 the parameters.
 
 Please change the folder names before starting the training. 
@@ -26,7 +26,7 @@ from DTLN_model import DTLN_model
 import os
 
 # use the GPU with idx 0
-os.environ["CUDA_VISIBLE_DEVICES"]='0'
+os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3,4,5,6,7'
 # activate this for some reproducibility
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
@@ -35,13 +35,13 @@ os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
 
 # path to folder containing the noisy or mixed audio training files
-path_to_train_mix = '/data/DNS-Challenge/training_set/train/noisy/'
+path_to_train_mix = '/data/Drone_Audio_dataset_intflow/training_set/train/noisy/'
 # path to folder containing the clean/speech files for training
-path_to_train_speech = '/data/DNS-Challenge/training_set/train/clean/'
+path_to_train_speech = '/data/Drone_Audio_dataset_intflow/training_set/train/clean/'
 # path to folder containing the noisy or mixed audio validation data
-path_to_val_mix = '/data/DNS-Challenge/training_set/val/noisy/'
+path_to_val_mix = '/data/Drone_Audio_dataset_intflow/training_set/val/noisy/'
 # path to folder containing the clean audio validation data
-path_to_val_speech = '/data/DNS-Challenge/training_set/val/clean/'
+path_to_val_speech = '/data/Drone_Audio_dataset_intflow/training_set/val/clean/'
 
 # name your training run
 runName = 'DTLN_model'

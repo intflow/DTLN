@@ -135,14 +135,14 @@ class DTLN_model():
         # empty property for the model
         self.model = []
         # defining default parameters
-        self.fs = 16000
+        self.fs = 48000
         self.batchsize = 32
         self.len_samples = 15
         self.activation = 'sigmoid'
         self.numUnits = 128
         self.numLayer = 2
-        self.blockLen = 512
-        self.block_shift = 128
+        self.blockLen = 2048
+        self.block_shift = 512
         self.dropout = 0.25
         self.lr = 1e-3
         self.max_epochs = 200
