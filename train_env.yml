@@ -19,9 +19,9 @@ dependencies:
   - chardet=3.0.4=py37_1003
   - click=7.1.2=py_0
   - cryptography=2.9.2=py37h1ba5d50_0
-  - cudatoolkit=10.1.243=h6bb024c_0
-  - cudnn=7.6.5=cuda10.1_0
-  - cupti=10.1.168=0
+  - cudatoolkit==11.4
+  - cudnn
+  - cupti
   - cycler=0.10.0=py_2
   - decorator=4.4.2=py_0
   - ffmpeg=4.2.3=h167e202_0
