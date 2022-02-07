@@ -26,7 +26,7 @@ from DTLN_model import DTLN_model
 import os
 
 # use the GPU with idx 0
-os.environ["CUDA_VISIBLE_DEVICES"]='0'
+os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3,4,5,6,7'
 # activate this for some reproducibility
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 

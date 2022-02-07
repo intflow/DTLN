@@ -21,9 +21,9 @@ import tensorflow as tf
 if __name__ == '__main__':
     # arguement parser for running directly from the command line
     parser = argparse.ArgumentParser(description='data evaluation')
-    parser.add_argument('--weights_file', '-m',
+    parser.add_argument('--weights_file', '-m', default = "./models_DTLN_model/DTLN_model.h5",
                         help='path to .h5 weights file')
-    parser.add_argument('--target_folder', '-t',
+    parser.add_argument('--target_folder', '-t', default = "./models_DTLN_model",
                         help='target folder for saved model')
     parser.add_argument('--quantization', '-q',
                         help='use quantization (True/False)',

@@ -18,10 +18,10 @@ import tensorflow as tf
 block_len = 512
 block_shift = 128
 # load model
-model = tf.saved_model.load('./pretrained_model/dtln_saved_model')
+model = tf.saved_model.load('./models_DTLN_model/savedModel')
 infer = model.signatures["serving_default"]
 # load audio file at 16k fs (please change)
-audio,fs = sf.read('path_to_your_favorite_audio.wav')
+audio,fs = sf.read('/data/DNS-Challenge/training_set/val/noisy/fileid_4797.wav')
 # check for sampling rate
 if fs != 16000:
     raise ValueError('This model only supports 16k sampling rate.')
