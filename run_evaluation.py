@@ -44,7 +44,7 @@ def process_file(model, audio_file_name, out_file_name):
     '''
     
     # read audio file with librosa to handle resampling and enforce mono
-    in_data,fs = librosa.core.load(audio_file_name, sr=16000, mono=True)
+    in_data,fs = librosa.core.load(audio_file_name, sr=48000, mono=True)
     # predict audio with the model
     predicted = model.predict_on_batch(
         np.expand_dims(in_data,axis=0).astype(np.float32))
@@ -118,8 +118,8 @@ if __name__ == '__main__':
     # create class instance
     modelClass = DTLN_model();
     # build the model in default configuration
-    modelClass.build_DTLN_model(norm_stft=norm_stft)
+    modelClass.build_DTLN_model(norm_stft=True)
     # load weights of the .h5 file
-    modelClass.model.load_weights(args.model)
+    modelClass.model.load_weights(args.model, by_name = True, skip_mismatch = True)
     # process the folder
     process_folder(modelClass.model, args.in_folder, args.out_folder)

@@ -139,14 +139,14 @@ class DTLN_model():
         self.batchsize = 32
         self.len_samples = 15
         self.activation = 'sigmoid'
-        self.numUnits = 128
+        self.numUnits = 256
         self.numLayer = 2
         self.blockLen = 2048
         self.block_shift = 512
         self.dropout = 0.25
         self.lr = 1e-3
         self.max_epochs = 200
-        self.encoder_size = 256
+        self.encoder_size = 512
         self.eps = 1e-7
         # reset all seeds to 42 to reduce invariance between training runs
         os.environ['PYTHONHASHSEED']=str(42)

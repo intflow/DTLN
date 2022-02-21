@@ -26,7 +26,7 @@ from DTLN_model import DTLN_model
 import os
 
 # use the GPU with idx 0
-os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3,4,5,6,7'
+os.environ["CUDA_VISIBLE_DEVICES"]='0,1,2,3'
 # activate this for some reproducibility
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
@@ -44,11 +44,11 @@ path_to_val_mix = '/data/Drone_Audio_dataset_intflow/training_set/val/noisy/'
 path_to_val_speech = '/data/Drone_Audio_dataset_intflow/training_set/val/clean/'
 
 # name your training run
-runName = 'DTLN_model'
+runName = 'DTLN_Drone_48k_intflow_2'
 # create instance of the DTLN model class
 modelTrainer = DTLN_model()
 # build the model
-modelTrainer.build_DTLN_model()
+modelTrainer.build_DTLN_model(norm_stft=True)
 # compile it with optimizer and cost function for training
 modelTrainer.compile_model()
 # train the model
