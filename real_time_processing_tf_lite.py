@@ -25,9 +25,9 @@ import time
 block_len = 512
 block_shift = 128
 # load models
-interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/model_1.tflite')
+interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_1.tflite')
 interpreter_1.allocate_tensors()
-interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/model_2.tflite')
+interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_2.tflite')
 interpreter_2.allocate_tensors()
 
 # Get input and output tensors.

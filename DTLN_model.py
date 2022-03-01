@@ -444,12 +444,13 @@ class DTLN_model():
 
         '''
         # check for type
-        if weights_file.find('_norm_') != -1:
-            norm_stft = True
-            num_elements_first_core = 2 + self.numLayer * 3 + 2
-        else:
-            norm_stft = False
-            num_elements_first_core = self.numLayer * 3 + 2
+        #if weights_file.find('_norm_') != -1:
+        norm_stft = True
+        num_elements_first_core = 2 + self.numLayer * 3 + 2
+        #else:
+        #    norm_stft = False
+        #    num_elements_first_core = self.numLayer * 3 + 2
+
         # build model    
         self.build_DTLN_model_stateful(norm_stft=norm_stft)
         # load weights

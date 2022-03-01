@@ -67,9 +67,9 @@ block_len_ms = 32
 block_shift_ms = 8
 fs_target = 48000
 # create the interpreters
-interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/model_1.tflite')
+interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_1.tflite')
 interpreter_1.allocate_tensors()
-interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/model_2.tflite')
+interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_2.tflite')
 interpreter_2.allocate_tensors()
 # Get input and output tensors.
 input_details_1 = interpreter_1.get_input_details()
