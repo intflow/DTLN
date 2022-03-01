@@ -35,16 +35,16 @@ os.environ['TF_DETERMINISTIC_OPS'] = '1'
 
 
 # path to folder containing the noisy or mixed audio training files
-path_to_train_mix = '/data/Drone_Audio_dataset_intflow/training_set/train/noisy/'
+path_to_train_mix = '/data/Drone_Audio_dataset_intflow/training_set_drone/train/noisy/'
 # path to folder containing the clean/speech files for training
-path_to_train_speech = '/data/Drone_Audio_dataset_intflow/training_set/train/clean/'
+path_to_train_speech = '/data/Drone_Audio_dataset_intflow/training_set_drone/train/clean/'
 # path to folder containing the noisy or mixed audio validation data
-path_to_val_mix = '/data/Drone_Audio_dataset_intflow/training_set/val/noisy/'
+path_to_val_mix = '/data/Drone_Audio_dataset_intflow/training_set_drone/val/noisy/'
 # path to folder containing the clean audio validation data
-path_to_val_speech = '/data/Drone_Audio_dataset_intflow/training_set/val/clean/'
+path_to_val_speech = '/data/Drone_Audio_dataset_intflow/training_set_drone/val/clean/'
 
 # name your training run
-runName = 'DTLN_Drone_48k_intflow_2'
+runName = 'DTLN_Drone_48k_intflow_3'
 # create instance of the DTLN model class
 modelTrainer = DTLN_model()
 # build the model

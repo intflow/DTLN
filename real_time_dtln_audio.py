@@ -65,7 +65,7 @@ args = parser.parse_args(remaining)
 # set some parameters
 block_len_ms = 32 
 block_shift_ms = 8
-fs_target = 16000
+fs_target = 48000
 # create the interpreters
 interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/model_1.tflite')
 interpreter_1.allocate_tensors()
