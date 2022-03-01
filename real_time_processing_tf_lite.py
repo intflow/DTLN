@@ -22,8 +22,8 @@ import time
 ##########################
 # the values are fixed, if you need other values, you have to retrain.
 # The sampling rate of 16k is also fix.
-block_len = 512
-block_shift = 128
+block_len = 1536
+block_shift = 384
 # load models
 interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_1.tflite')
 interpreter_1.allocate_tensors()
@@ -40,10 +40,10 @@ output_details_2 = interpreter_2.get_output_details()
 states_1 = np.zeros(input_details_1[1]['shape']).astype('float32')
 states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 # load audio file at 16k fs (please change)
-audio,fs = sf.read('path/to/your/favorite/.wav')
+audio,fs = sf.read('/data/Drone_Audio_dataset_intflow/noisy_real/noisy/fileid_3.wav')
 # check for sampling rate
-if fs != 16000:
-    raise ValueError('This model only supports 16k sampling rate.')
+if fs != 48000:
+    raise ValueError('This model only supports 48k sampling rate.')
 # preallocate output audio
 out_file = np.zeros((len(audio)))
 # create buffer
