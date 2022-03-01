@@ -37,7 +37,7 @@ output_details_1 = interpreter_1.get_output_details()
 input_details_2 = interpreter_2.get_input_details()
 output_details_2 = interpreter_2.get_output_details()
 # create states for the lstms
-states_1 = np.zeros(input_details_1[1]['shape']).astype('float32')
+states_1 = np.zeros(input_details_1[0]['shape']).astype('float32')
 states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 # load audio file at 16k fs (please change)
 audio,fs = sf.read('/data/Drone_Audio_dataset_intflow/noisy_real/noisy/fileid_3.wav')
@@ -65,8 +65,8 @@ for idx in range(num_blocks):
     # reshape magnitude to input dimensions
     in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
     # set tensors to the first model
-    interpreter_1.set_tensor(input_details_1[1]['index'], states_1)
-    interpreter_1.set_tensor(input_details_1[0]['index'], in_mag)
+    interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
+    interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
     # run calculation 
     interpreter_1.invoke()
     # get the output of the first block
@@ -83,8 +83,8 @@ for idx in range(num_blocks):
     # run calculation
     interpreter_2.invoke()
     # get output tensors
-    out_block = interpreter_2.get_tensor(output_details_2[0]['index']) 
-    states_2 = interpreter_2.get_tensor(output_details_2[1]['index']) 
+    out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
+    states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
     
     
     # shift values and write to buffer
