@@ -25,9 +25,9 @@ import time
 block_len = 1536
 block_shift = 384
 # load models
-interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_1.tflite')
+interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_4_1.tflite')
 interpreter_1.allocate_tensors()
-interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_2.tflite')
+interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_4_2.tflite')
 interpreter_2.allocate_tensors()
 
 # Get input and output tensors.
@@ -40,59 +40,70 @@ output_details_2 = interpreter_2.get_output_details()
 states_1 = np.zeros(input_details_1[0]['shape']).astype('float32')
 states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 # load audio file at 16k fs (please change)
-audio,fs = sf.read('/data/Drone_Audio_dataset_intflow/noisy_real/noisy/fileid_3.wav')
+audio,fs = sf.read('/data/Drone_Audio_dataset_intflow/noisy_real/noisy/mix1.wav')
+
+# Set channel number
+if len(audio.shape) == 2:
+    ch_num = audio.shape[1]
+    print("Multichannel file inputted!!")
+else:
+    ch_num = 1
+    audio = audio.reshape(-1,1)
+    print("Mono file inputted!!")
+
 # check for sampling rate
 if fs != 48000:
     raise ValueError('This model only supports 48k sampling rate.')
 # preallocate output audio
-out_file = np.zeros((len(audio)))
+out_file = np.zeros((len(audio), ch_num))
 # create buffer
-in_buffer = np.zeros((block_len)).astype('float32')
-out_buffer = np.zeros((block_len)).astype('float32')
+in_buffer = np.zeros((block_len, ch_num)).astype('float32')
+out_buffer = np.zeros((block_len, ch_num)).astype('float32')
 # calculate number of blocks
 num_blocks = (audio.shape[0] - (block_len-block_shift)) // block_shift
 time_array = []      
 # iterate over the number of blcoks  
 for idx in range(num_blocks):
     start_time = time.time()
-    # shift values and write to buffer
-    in_buffer[:-block_shift] = in_buffer[block_shift:]
-    in_buffer[-block_shift:] = audio[idx*block_shift:(idx*block_shift)+block_shift]
-    # calculate fft of input block
-    in_block_fft = np.fft.rfft(in_buffer)
-    in_mag = np.abs(in_block_fft)
-    in_phase = np.angle(in_block_fft)
-    # reshape magnitude to input dimensions
-    in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
-    # set tensors to the first model
-    interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
-    interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
-    # run calculation 
-    interpreter_1.invoke()
-    # get the output of the first block
-    out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
-    states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
-    # calculate the ifft
-    estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
-    estimated_block = np.fft.irfft(estimated_complex)
-    # reshape the time domain block
-    estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
-    # set tensors to the second block
-    interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
-    interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
-    # run calculation
-    interpreter_2.invoke()
-    # get output tensors
-    out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
-    states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
-    
-    
-    # shift values and write to buffer
-    out_buffer[:-block_shift] = out_buffer[block_shift:]
-    out_buffer[-block_shift:] = np.zeros((block_shift))
-    out_buffer  += np.squeeze(out_block)
-    # write block to output file
-    out_file[idx*block_shift:(idx*block_shift)+block_shift] = out_buffer[:block_shift]
+
+    for ch in range(0,ch_num):
+        # shift values and write to buffer
+        in_buffer[:-block_shift,ch] = in_buffer[block_shift:,ch]
+        in_buffer[-block_shift:,ch] = audio[idx*block_shift:(idx*block_shift)+block_shift,ch]
+        # calculate fft of input block
+        in_block_fft = np.fft.rfft(in_buffer[:,ch])
+        in_mag = np.abs(in_block_fft)
+        in_phase = np.angle(in_block_fft)
+        # reshape magnitude to input dimensions
+        in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
+        # set tensors to the first model
+        interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
+        interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
+        # run calculation 
+        interpreter_1.invoke()
+        # get the output of the first block
+        out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
+        states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
+        # calculate the ifft
+        estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
+        estimated_block = np.fft.irfft(estimated_complex)
+        # reshape the time domain block
+        estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
+        # set tensors to the second block
+        interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
+        interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
+        # run calculation
+        interpreter_2.invoke()
+        # get output tensors
+        out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
+        states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
+        
+        # shift values and write to buffer
+        out_buffer[:-block_shift,ch] = out_buffer[block_shift:,ch]
+        out_buffer[-block_shift:,ch] = np.zeros((block_shift))
+        out_buffer[:,ch] += np.squeeze(out_block)
+        # write block to output file
+        out_file[idx*block_shift:(idx*block_shift)+block_shift,ch] = out_buffer[:block_shift,ch]
     time_array.append(time.time()-start_time)
     
 # write to .wav file 

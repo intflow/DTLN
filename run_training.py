@@ -44,7 +44,7 @@ path_to_val_mix = '/data/Drone_Audio_dataset_intflow/training_set_drone/val/nois
 path_to_val_speech = '/data/Drone_Audio_dataset_intflow/training_set_drone/val/clean/'
 
 # name your training run
-runName = 'DTLN_Drone_48k_intflow_3'
+runName = 'DTLN_Drone_48k_intflow_4'
 # create instance of the DTLN model class
 modelTrainer = DTLN_model()
 # build the model
