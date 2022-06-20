@@ -131,6 +131,9 @@ def callback(indata, outdata, frames, time, status):
     
 
 
+
+
+
 try:
     with sd.Stream(device=(args.input_device, args.output_device),
                    samplerate=fs_target, blocksize=block_shift,
@@ -139,7 +142,6 @@ try:
         print('#' * 80)
         print('press Return to quit')
         print('#' * 80)
-        input()
 except KeyboardInterrupt:
     parser.exit('')
 except Exception as e:
