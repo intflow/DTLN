@@ -30,6 +30,10 @@ import numpy as np
 import sounddevice as sd
 import tflite_runtime.interpreter as tflite
 import argparse
+import threading
+import queue
+import time
+from getkey import getkey
 
 
 def int_or_str(text):
@@ -59,17 +63,18 @@ parser.add_argument(
     '-o', '--output-device', type=int_or_str,
     help='output device (numeric ID or substring)')
 
-parser.add_argument('--latency', type=float, help='latency in seconds', default=0.2)
+parser.add_argument('--latency', type=float, help='latency in seconds', default=0.5)
 args = parser.parse_args(remaining)
 
 # set some parameters
 block_len_ms = 32 
 block_shift_ms = 8
 fs_target = 48000
+ch_num = 2
 # create the interpreters
-interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_1.tflite')
+interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_4_1.tflite')
 interpreter_1.allocate_tensors()
-interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_3_2.tflite')
+interpreter_2 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_4_2.tflite')
 interpreter_2.allocate_tensors()
 # Get input and output tensors.
 input_details_1 = interpreter_1.get_input_details()
@@ -83,8 +88,8 @@ states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 block_shift = int(np.round(fs_target * (block_shift_ms / 1000)))
 block_len = int(np.round(fs_target * (block_len_ms / 1000)))
 # create buffer
-in_buffer = np.zeros((block_len)).astype('float32')
-out_buffer = np.zeros((block_len)).astype('float32')
+in_buffer = np.zeros((block_len), ch_num).astype('float32')
+out_buffer = np.zeros((block_len), ch_num).astype('float32')
 
 
 def callback(indata, outdata, frames, time, status):
@@ -92,58 +97,125 @@ def callback(indata, outdata, frames, time, status):
     global in_buffer, out_buffer, states_1, states_2
     if status:
         print(status)
-    # write to buffer
-    in_buffer[:-block_shift] = in_buffer[block_shift:]
-    in_buffer[-block_shift:] = np.squeeze(indata)
-    # calculate fft of input block
-    in_block_fft = np.fft.rfft(in_buffer)
-    in_mag = np.abs(in_block_fft)
-    in_phase = np.angle(in_block_fft)
-    # reshape magnitude to input dimensions
-    in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
-    # set tensors to the first model
-    interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
-    interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
-    # run calculation 
-    interpreter_1.invoke()
-    # get the output of the first block
-    out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
-    states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
-    # calculate the ifft
-    estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
-    estimated_block = np.fft.irfft(estimated_complex)
-    # reshape the time domain block
-    estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
-    # set tensors to the second block
-    interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
-    interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
-    # run calculation
-    interpreter_2.invoke()
-    # get output tensors
-    out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
-    states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
-    # write to buffer
-    out_buffer[:-block_shift] = out_buffer[block_shift:]
-    out_buffer[-block_shift:] = np.zeros((block_shift))
-    out_buffer  += np.squeeze(out_block)
-    # output to soundcard
-    outdata[:] = np.expand_dims(out_buffer[:block_shift], axis=-1)
+
+    for ch in range(0,ch_num):
+        # shift values and write to buffer
+        in_buffer[:-block_shift,ch] = in_buffer[block_shift:,ch]
+        in_buffer[-block_shift:,ch] = indata[:,ch]
+        # calculate fft of input block
+        in_block_fft = np.fft.rfft(in_buffer[:,ch])
+        in_mag = np.abs(in_block_fft)
+        in_phase = np.angle(in_block_fft)
+        # reshape magnitude to input dimensions
+        in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
+        # set tensors to the first model
+        interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
+        interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
+        # run calculation 
+        interpreter_1.invoke()
+        # get the output of the first block
+        out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
+        states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
+        # calculate the ifft
+        if onoff_flag == True:
+            estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
+        else:
+            estimated_complex = in_mag * np.exp(1j * in_phase)
+        estimated_block = np.fft.irfft(estimated_complex)
+        # reshape the time domain block
+        estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
+        # set tensors to the second block
+        interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
+        interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
+        # run calculation
+        interpreter_2.invoke()
+        # get output tensors
+        out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
+        states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
+        
+        # shift values and write to buffer
+        out_buffer[:-block_shift,ch] = out_buffer[block_shift:,ch]
+        out_buffer[-block_shift:,ch] = np.zeros((block_shift))
+        out_buffer[:,ch] += np.squeeze(out_block)
+        # output to soundcard
+        outdata[:,ch] = out_buffer[:block_shift,ch]
+
+    # # write to buffer
+    # in_buffer[:-block_shift] = in_buffer[block_shift:]
+    # in_buffer[-block_shift:] = np.squeeze(indata)
+    # # calculate fft of input block
+    # in_block_fft = np.fft.rfft(in_buffer)
+    # in_mag = np.abs(in_block_fft)
+    # in_phase = np.angle(in_block_fft)
+    # # reshape magnitude to input dimensions
+    # in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
+    # # set tensors to the first model
+    # interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
+    # interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
+    # # run calculation 
+    # interpreter_1.invoke()
+    # # get the output of the first block
+    # out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
+    # states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
+    # # calculate the ifft
+    # estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
+    # estimated_block = np.fft.irfft(estimated_complex)
+    # # reshape the time domain block
+    # estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
+    # # set tensors to the second block
+    # interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
+    # interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
+    # # run calculation
+    # interpreter_2.invoke()
+    # # get output tensors
+    # out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
+    # states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
+    # # write to buffer
+    # out_buffer[:-block_shift] = out_buffer[block_shift:]
+    # out_buffer[-block_shift:] = np.zeros((block_shift))
+    # out_buffer  += np.squeeze(out_block)
+    # # output to soundcard
+    # outdata[:] = np.expand_dims(out_buffer[:block_shift], axis=-1)
     
 
 
-
-
-
-try:
-    with sd.Stream(device=(args.input_device, args.output_device),
-                   samplerate=fs_target, blocksize=block_shift,
-                   dtype=np.float32, latency=args.latency,
-                   channels=1, callback=callback):
-        print('#' * 80)
-        print('press Return to quit')
-        print('#' * 80)
-except KeyboardInterrupt:
-    parser.exit('')
-except Exception as e:
-    parser.exit(type(e).__name__ + ': ' + str(e))
+def onKeyInput():
+    global onoff_flag, end_flag
     
+    while (True):
+        key = getkey()
+        if key == 't':
+            if onoff_flag:
+                onoff_flag = False
+            else:
+                onoff_flag = True
+        if key == 'q':
+            end_flag = True
+            break
+            
+def main():
+    global onoff_flag, end_flag
+    
+    onoff_flag = False
+    end_flag = False
+
+    keyThread = threading.Thread(target=onKeyInput)
+    keyThread.daemon = True 
+    keyThread.start()
+
+
+    try:
+        with sd.Stream(device=(args.input_device, args.output_device),
+                    samplerate=fs_target, blocksize=block_shift,
+                    dtype=np.float32, latency=args.latency,
+                    channels=2, callback=callback):
+            print('#' * 80)
+            print('press Return to quit')
+            print('#' * 80)
+        if end_flag == True:
+           parser.exit('----Audio Demo Finished----')
+    except Exception as e:
+        parser.exit(type(e).__name__ + ': ' + str(e))
+
+if __name__ == "__main__" :
+    main()

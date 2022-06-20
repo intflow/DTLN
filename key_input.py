@@ -4,7 +4,7 @@ import time
 from getkey import getkey
 
 def onKeyInput():
-    global onoff_flag
+    global onoff_flag, end_flag
     
     while (True):
         key = getkey()
@@ -13,11 +13,16 @@ def onKeyInput():
                 onoff_flag = False
             else:
                 onoff_flag = True
+        if key == 'q':
+            end_flag = True
+            break
+            
 
 def main():
-    global onoff_flag
+    global onoff_flag, end_flag
     
     onoff_flag = False
+    end_flag = False
 
     keyThread = threading.Thread(target=onKeyInput)
     keyThread.daemon = True 
@@ -25,8 +30,13 @@ def main():
 
     while (True):
         print(onoff_flag)
+        
+        if end_flag:
+            break
 
         time.sleep(0.5)
+        
+    print("End")
 
 if __name__ == "__main__" :
     main()
