@@ -88,8 +88,8 @@ states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 block_shift = int(np.round(fs_target * (block_shift_ms / 1000)))
 block_len = int(np.round(fs_target * (block_len_ms / 1000)))
 # create buffer
-in_buffer = np.zeros((block_len, ch_num)).astype('float32')
-out_buffer = np.zeros((block_len, ch_num)).astype('float32')
+in_buffer = np.zeros((block_len), ch_num).astype('float32')
+out_buffer = np.zeros((block_len), ch_num).astype('float32')
 
 
 def callback(indata, outdata, frames, time, status):
@@ -98,84 +98,42 @@ def callback(indata, outdata, frames, time, status):
     if status:
         print(status)
 
-    for ch in range(0,ch_num):
-        # shift values and write to buffer
-        in_buffer[:-block_shift,ch] = in_buffer[block_shift:,ch]
-        in_buffer[-block_shift:,ch] = indata[:,ch]
-        # calculate fft of input block
-        in_block_fft = np.fft.rfft(in_buffer[:,ch])
-        in_mag = np.abs(in_block_fft)
-        in_phase = np.angle(in_block_fft)
-        # reshape magnitude to input dimensions
-        in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
-        # set tensors to the first model
-        interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
-        interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
-        # run calculation 
-        interpreter_1.invoke()
-        # get the output of the first block
-        out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
-        states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
-        # calculate the ifft
-        if onoff_flag == True:
-            estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
-        else:
-            estimated_complex = in_mag * np.exp(1j * in_phase)
-        estimated_block = np.fft.irfft(estimated_complex)
-        # reshape the time domain block
-        estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
-        # set tensors to the second block
-        interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
-        interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
-        # run calculation
-        interpreter_2.invoke()
-        # get output tensors
-        out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
-        states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
-        
-        # shift values and write to buffer
-        out_buffer[:-block_shift,ch] = out_buffer[block_shift:,ch]
-        out_buffer[-block_shift:,ch] = np.zeros((block_shift))
-        out_buffer[:,ch] += np.squeeze(out_block)
-        # output to soundcard
-        outdata[:,ch] = out_buffer[:block_shift,ch]
-
-    # # write to buffer
-    # in_buffer[:-block_shift] = in_buffer[block_shift:]
-    # in_buffer[-block_shift:] = np.squeeze(indata)
-    # # calculate fft of input block
-    # in_block_fft = np.fft.rfft(in_buffer)
-    # in_mag = np.abs(in_block_fft)
-    # in_phase = np.angle(in_block_fft)
-    # # reshape magnitude to input dimensions
-    # in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
-    # # set tensors to the first model
-    # interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
-    # interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
-    # # run calculation 
-    # interpreter_1.invoke()
-    # # get the output of the first block
-    # out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
-    # states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
-    # # calculate the ifft
-    # estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
-    # estimated_block = np.fft.irfft(estimated_complex)
-    # # reshape the time domain block
-    # estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
-    # # set tensors to the second block
-    # interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
-    # interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
-    # # run calculation
-    # interpreter_2.invoke()
-    # # get output tensors
-    # out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
-    # states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
-    # # write to buffer
-    # out_buffer[:-block_shift] = out_buffer[block_shift:]
-    # out_buffer[-block_shift:] = np.zeros((block_shift))
-    # out_buffer  += np.squeeze(out_block)
-    # # output to soundcard
-    # outdata[:] = np.expand_dims(out_buffer[:block_shift], axis=-1)
+    # write to buffer
+    in_buffer[:-block_shift] = in_buffer[block_shift:]
+    in_buffer[-block_shift:] = np.squeeze(indata)
+    # calculate fft of input block
+    in_block_fft = np.fft.rfft(in_buffer)
+    in_mag = np.abs(in_block_fft)
+    in_phase = np.angle(in_block_fft)
+    # reshape magnitude to input dimensions
+    in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
+    # set tensors to the first model
+    interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
+    interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
+    # run calculation 
+    interpreter_1.invoke()
+    # get the output of the first block
+    out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
+    states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
+    # calculate the ifft
+    estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
+    estimated_block = np.fft.irfft(estimated_complex)
+    # reshape the time domain block
+    estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
+    # set tensors to the second block
+    interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
+    interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
+    # run calculation
+    interpreter_2.invoke()
+    # get output tensors
+    out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
+    states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
+    # write to buffer
+    out_buffer[:-block_shift] = out_buffer[block_shift:]
+    out_buffer[-block_shift:] = np.zeros((block_shift))
+    out_buffer  += np.squeeze(out_block)
+    # output to soundcard
+    outdata[:] = np.expand_dims(out_buffer[:block_shift], axis=-1)
     
 
 
@@ -203,12 +161,11 @@ def main():
     keyThread.daemon = True 
     keyThread.start()
 
-
     try:
         with sd.Stream(device=(args.input_device, args.output_device),
                     samplerate=fs_target, blocksize=block_shift,
                     dtype=np.float32, latency=args.latency,
-                    channels=2, callback=callback):
+                    channels=1, callback=callback):
             print('#' * 80)
             print('press Return to quit')
             print('#' * 80)
