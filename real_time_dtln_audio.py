@@ -33,7 +33,8 @@ import argparse
 import threading
 import queue
 import time
-from getkey import getkey
+from getkey import getkey, keys
+import sys
 
 
 def int_or_str(text):
@@ -150,13 +151,14 @@ def onKeyInput():
         if key == 't':
             if onoff_flag:
                 onoff_flag = False
-                print("[OFF]")
+                print("[OFF]AudioProcess")
             else:
                 onoff_flag = True
-                print("[ON]")
-        if key == 'q':
+                print("[ON]AudioProcess")
+        if key == keys.ENTER:
             end_flag = True
-            break
+            print("----Terminate Program----")
+            sys.exit()
             
 def main():
     global onoff_flag, end_flag
@@ -178,9 +180,6 @@ def main():
             print('press Return to quit')
             print('#' * 80)
             input()
-        if end_flag == True:
-           keyThread.terminate()
-           parser.exit('----Audio Demo Finished----')
     except Exception as e:
         parser.exit(type(e).__name__ + ': ' + str(e))
 

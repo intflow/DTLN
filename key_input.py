@@ -1,7 +1,8 @@
 import threading
 import queue
 import time
-from getkey import getkey
+from getkey import getkey, keys
+import sys
 
 def onKeyInput():
     global onoff_flag, end_flag
@@ -11,10 +12,14 @@ def onKeyInput():
         if key == 't':
             if onoff_flag:
                 onoff_flag = False
+                print("[OFF]AudioProcess")
             else:
                 onoff_flag = True
-        if key == 'q':
+                print("[ON]AudioProcess")
+        if key == keys.ENTER:
             end_flag = True
+            print("----Terminate Program----")
+            sys.exit()
             break
             
 
