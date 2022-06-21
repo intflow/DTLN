@@ -70,7 +70,7 @@ args = parser.parse_args(remaining)
 block_len_ms = 32 
 block_shift_ms = 8
 fs_target = 48000
-ch_num = 2
+ch_num = 1
 # create the interpreters
 interpreter_1 = tflite.Interpreter(model_path='./pretrained_model/DTLN_Drone_48k_intflow_4_1.tflite')
 interpreter_1.allocate_tensors()
@@ -88,8 +88,8 @@ states_2 = np.zeros(input_details_2[1]['shape']).astype('float32')
 block_shift = int(np.round(fs_target * (block_shift_ms / 1000)))
 block_len = int(np.round(fs_target * (block_len_ms / 1000)))
 # create buffer
-in_buffer = np.zeros((block_len), ch_num).astype('float32')
-out_buffer = np.zeros((block_len), ch_num).astype('float32')
+in_buffer = np.zeros(block_len).astype('float32')
+out_buffer = np.zeros(block_len).astype('float32')
 
 
 def callback(indata, outdata, frames, time, status):
