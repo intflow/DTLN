@@ -140,43 +140,6 @@ def callback(indata, outdata, frames, time, status):
         # output to soundcard
         outdata[:,ch] = out_buffer[:block_shift,ch]
 
-    # # write to buffer
-    # in_buffer[:-block_shift] = in_buffer[block_shift:]
-    # in_buffer[-block_shift:] = np.squeeze(indata)
-    # # calculate fft of input block
-    # in_block_fft = np.fft.rfft(in_buffer)
-    # in_mag = np.abs(in_block_fft)
-    # in_phase = np.angle(in_block_fft)
-    # # reshape magnitude to input dimensions
-    # in_mag = np.reshape(in_mag, (1,1,-1)).astype('float32')
-    # # set tensors to the first model
-    # interpreter_1.set_tensor(input_details_1[1]['index'], in_mag)
-    # interpreter_1.set_tensor(input_details_1[0]['index'], states_1)
-    # # run calculation 
-    # interpreter_1.invoke()
-    # # get the output of the first block
-    # out_mask = interpreter_1.get_tensor(output_details_1[0]['index']) 
-    # states_1 = interpreter_1.get_tensor(output_details_1[1]['index'])   
-    # # calculate the ifft
-    # estimated_complex = in_mag * out_mask * np.exp(1j * in_phase)
-    # estimated_block = np.fft.irfft(estimated_complex)
-    # # reshape the time domain block
-    # estimated_block = np.reshape(estimated_block, (1,1,-1)).astype('float32')
-    # # set tensors to the second block
-    # interpreter_2.set_tensor(input_details_2[1]['index'], states_2)
-    # interpreter_2.set_tensor(input_details_2[0]['index'], estimated_block)
-    # # run calculation
-    # interpreter_2.invoke()
-    # # get output tensors
-    # out_block = interpreter_2.get_tensor(output_details_2[1]['index']) 
-    # states_2 = interpreter_2.get_tensor(output_details_2[0]['index']) 
-    # # write to buffer
-    # out_buffer[:-block_shift] = out_buffer[block_shift:]
-    # out_buffer[-block_shift:] = np.zeros((block_shift))
-    # out_buffer  += np.squeeze(out_block)
-    # # output to soundcard
-    # outdata[:] = np.expand_dims(out_buffer[:block_shift], axis=-1)
-    
 
 
 def onKeyInput():
@@ -187,8 +150,10 @@ def onKeyInput():
         if key == 't':
             if onoff_flag:
                 onoff_flag = False
+                print("[OFF]")
             else:
                 onoff_flag = True
+                print("[ON]")
         if key == 'q':
             end_flag = True
             break
@@ -212,7 +177,9 @@ def main():
             print('#' * 80)
             print('press Return to quit')
             print('#' * 80)
+            input()
         if end_flag == True:
+           keyThread.terminate()
            parser.exit('----Audio Demo Finished----')
     except Exception as e:
         parser.exit(type(e).__name__ + ': ' + str(e))
